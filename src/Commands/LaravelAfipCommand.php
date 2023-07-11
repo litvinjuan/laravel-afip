@@ -1,12 +1,12 @@
 <?php
 
-namespace VendorName\Skeleton\Commands;
+namespace litvinjuan\LaravelAfip\Commands;
 
 use Illuminate\Console\Command;
 
-class SkeletonCommand extends Command
+class LaravelAfipCommand extends Command
 {
-    public $signature = 'skeleton';
+    public $signature = 'laravel-afip';
 
     public $description = 'My command';
 
