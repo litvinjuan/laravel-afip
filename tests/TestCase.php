@@ -3,8 +3,8 @@
 namespace litvinjuan\LaravelAfip\Tests;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Orchestra\Testbench\TestCase as Orchestra;
 use litvinjuan\LaravelAfip\LaravelAfipServiceProvider;
+use Orchestra\Testbench\TestCase as Orchestra;
 
 class TestCase extends Orchestra
 {
