@@ -1,6 +1,8 @@
 <?php
 
-// config for litvinjuan/LaravelAfip
 return [
+    'certificates-disk' => 'afip',
+    'certificates-directory' => '/certificates',
 
+    'key-passphrase' => env('AFIP-KEY-PASSPHRASE'),
 ];

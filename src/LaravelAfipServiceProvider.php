@@ -4,7 +4,7 @@ namespace litvinjuan\LaravelAfip;
 
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use litvinjuan\LaravelAfip\Commands\LaravelAfipCommand;
+use litvinjuan\LaravelAfip\Commands\InstallLaravelAfipCommand;
 
 class LaravelAfipServiceProvider extends PackageServiceProvider
 {
@@ -18,8 +18,6 @@ class LaravelAfipServiceProvider extends PackageServiceProvider
         $package
             ->name('laravel-afip')
             ->hasConfigFile()
-            ->hasViews()
-            ->hasMigration('create_laravel-afip_table')
-            ->hasCommand(LaravelAfipCommand::class);
+            ->hasCommand(InstallLaravelAfipCommand::class);
     }
 }
