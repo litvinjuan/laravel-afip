@@ -8,7 +8,7 @@ class AfipAuthenticationException extends Exception
 {
     public function __construct(private readonly Exception $original_exception)
     {
-        parent::__construct("", 0, null);
+        parent::__construct('', 0, null);
     }
 
     public function getOriginalException()

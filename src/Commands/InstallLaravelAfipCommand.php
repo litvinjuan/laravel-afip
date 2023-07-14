@@ -26,7 +26,7 @@ class InstallLaravelAfipCommand extends Command
     {
         Storage::disk(config('afip.certificates-disk'))->makeDirectory(config('afip.certificates-directory'));
 
-        Storage::disk(config('afip.certificates-disk'))->put(config('afip.certificates-directory'). '/cert', '');
-        Storage::disk(config('afip.certificates-disk'))->put(config('afip.certificates-directory'). '/key', '');
+        Storage::disk(config('afip.certificates-disk'))->put(config('afip.certificates-directory').'/cert', '');
+        Storage::disk(config('afip.certificates-disk'))->put(config('afip.certificates-directory').'/key', '');
     }
 }

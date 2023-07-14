@@ -32,7 +32,7 @@ class PadronWebService extends WebService
             'token' => $this->getTokenAuthorization()->getToken(),
             'sign' => $this->getTokenAuthorization()->getSign(),
             'cuitRepresentada' => $this->cuit,
-            'idPersona'	=> $cuit,
+            'idPersona' => $cuit,
         ]);
     }
 }

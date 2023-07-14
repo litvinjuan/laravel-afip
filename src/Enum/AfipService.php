@@ -2,7 +2,8 @@
 
 namespace litvinjuan\LaravelAfip\Enum;
 
-enum AfipService {
+enum AfipService
+{
     case wsaa;
     case wsfe;
     case padron4;

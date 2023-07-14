@@ -15,25 +15,25 @@ class AfipSigning
                 $output_file,
                 self::getCert(),
                 [self::getKey(), self::getPassphrase()],
-                array(),
-                !PKCS7_DETACHED
+                [],
+                ! PKCS7_DETACHED
             );
 
-            if (!$result) {
-                throw new AfipSigningException("There was an error while signing using the certificate and key");
+            if (! $result) {
+                throw new AfipSigningException('There was an error while signing using the certificate and key');
             }
         } catch (\Exception $exception) {
-            throw new AfipSigningException("There was an error while signing using the certificate and key");
+            throw new AfipSigningException('There was an error while signing using the certificate and key');
         }
 
-        $file = fopen($output_file, "r");
+        $file = fopen($output_file, 'r');
         $i = 0;
 
-        $cms = "";
+        $cms = '';
         while (! feof($file)) {
             $buffer = fgets($file);
-            if ( $i++ >= 4 ) {
-                $cms.=$buffer;
+            if ($i++ >= 4) {
+                $cms .= $buffer;
             }
         }
         fclose($file);
@@ -43,15 +43,17 @@ class AfipSigning
 
     private static function getCert()
     {
-        $certPath = config('afip.certificates-directory') . '/cert';
+        $certPath = config('afip.certificates-directory').'/cert';
         $cert = Storage::disk(config('afip.certificates-disk'))->path($certPath);
+
         return file_get_contents($cert);
     }
 
     private static function getKey()
     {
-        $keyPath = config('afip.certificates-directory') . '/key';
+        $keyPath = config('afip.certificates-directory').'/key';
         $key = Storage::disk(config('afip.certificates-disk'))->path($keyPath);
+
         return file_get_contents($key);
     }
 

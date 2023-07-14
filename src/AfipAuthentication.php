@@ -11,7 +11,7 @@ class AfipAuthentication
     {
         $key = self::getKey($cuit, $afipService, $production);
 
-        if (!Cache::has($key)) {
+        if (! Cache::has($key)) {
             $tokenAuthorization = self::createServiceTokenAuthorization($cuit, $afipService, $production, $key);
             Cache::put($key, $tokenAuthorization, $tokenAuthorization->getExpiresAt());
         }

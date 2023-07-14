@@ -2,7 +2,8 @@
 
 namespace litvinjuan\LaravelAfip\Enum;
 
-enum AfipPadron {
+enum AfipPadron
+{
     case Padron4;
     case Padron5;
     case Padron10;

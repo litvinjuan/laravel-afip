@@ -8,6 +8,7 @@ use litvinjuan\LaravelAfip\WebServices\PadronWebService;
 class LaravelAfip
 {
     private string $cuit;
+
     private bool $production;
 
     public function init(string $cuit, bool $production = true)

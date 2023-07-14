@@ -10,7 +10,9 @@ use SoapClient;
 abstract class WebService
 {
     protected string $cuit;
+
     protected bool $production;
+
     private TokenAuthorization $tokenAuthorization;
 
     public function __construct(string $cuit, bool $production)
@@ -24,9 +26,9 @@ abstract class WebService
         $client = new SoapClient(
             $this->getWdsl(),
             [
-                'soap_version'   => SOAP_1_2,
-                'location'       => $this->getUrl(),
-                'trace'          => 1,
+                'soap_version' => SOAP_1_2,
+                'location' => $this->getUrl(),
+                'trace' => 1,
                 'stream_context' => stream_context_create([
                     'ssl' => [
                         'ciphers' => 'AES256-SHA',
@@ -57,7 +59,7 @@ abstract class WebService
 
     private function getWdsl()
     {
-        return __DIR__ . '/wsdl/' . $this->getWdslFilename();
+        return __DIR__.'/wsdl/'.$this->getWdslFilename();
     }
 
     private function getWdslFilename()
