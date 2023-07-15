@@ -13,10 +13,15 @@ use Spatie\TemporaryDirectory\TemporaryDirectory;
 class TokenAuthorizationRequest
 {
     private string $cuit;
+
     private AfipService $afipService;
+
     private bool $production;
+
     private TemporaryDirectory $temporaryDirectory;
+
     private string $cms;
+
     private TokenAuthorization $tokenAuthorization;
 
     public function __construct(string $cuit, AfipService $afipService, bool $production, string $key)
@@ -53,14 +58,14 @@ class TokenAuthorizationRequest
     private function generateXml(): void
     {
         $tra = new SimpleXMLElement(
-            '<?xml version="1.0" encoding="UTF-8"?>' .
+            '<?xml version="1.0" encoding="UTF-8"?>'.
             '<loginTicketRequest version="1.0">'.
             '</loginTicketRequest>');
 
         $tra->addChild('header');
-        $tra->header->addChild('uniqueId',date('U'));
-        $tra->header->addChild('generationTime',date('c',date('U')-60));
-        $tra->header->addChild('expirationTime',date('c',date('U')+60));
+        $tra->header->addChild('uniqueId', date('U'));
+        $tra->header->addChild('generationTime', date('c', date('U') - 60));
+        $tra->header->addChild('expirationTime', date('c', date('U') + 60));
         $tra->addChild('service', $this->afipService->name);
         $xml = $tra->asXML();
 
@@ -100,7 +105,7 @@ class TokenAuthorizationRequest
 
         try {
             $loginResult = $client->__soapCall('loginCms', [
-                'in0' => $this->cms
+                'in0' => $this->cms,
             ]);
         } catch (\Exception $exception) {
             throw new AfipAuthenticationException($exception);
@@ -119,7 +124,7 @@ class TokenAuthorizationRequest
 
     private function getWsdl(AfipService $afipService): string
     {
-        return __DIR__ . '/wsdl/' . $afipService->name . '.wsdl';
+        return __DIR__.'/wsdl/'.$afipService->name.'.wsdl';
     }
 
     private function getWsaaUrl(): string
