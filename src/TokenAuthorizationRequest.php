@@ -66,10 +66,22 @@ class TokenAuthorizationRequest
         $tra->header->addChild('uniqueId', date('U'));
         $tra->header->addChild('generationTime', date('c', date('U') - 60));
         $tra->header->addChild('expirationTime', date('c', date('U') + 60));
-        $tra->addChild('service', $this->afipService->name);
+        $tra->addChild('service', $this->translateAfipService());
         $xml = $tra->asXML();
 
         File::put($this->getXmlPath(), $xml);
+    }
+
+    private function translateAfipService(): string
+    {
+        return match ($this->afipService) {
+            AfipService::wsaa => 'wsaa',
+            AfipService::wsfe => 'wsfe',
+            AfipService::padron4 => 'ws_sr_padron_a4',
+            AfipService::padron5 => 'ws_sr_padron_a5',
+            AfipService::padron10 => 'ws_sr_padron_a10',
+            AfipService::padron13 => 'ws_sr_padron_a13',
+        };
     }
 
     private function sign(): void
@@ -104,19 +116,19 @@ class TokenAuthorizationRequest
         );
 
         try {
-            $loginResult = $client->__soapCall('loginCms', [
+            $loginResult = $client->loginCms([
                 'in0' => $this->cms,
             ]);
         } catch (\Exception $exception) {
             throw new AfipAuthenticationException($exception);
         }
 
-        $response = new SimpleXMLElement($loginResult->loginCmsReturn);
+        $response = json_decode(json_encode(new SimpleXMLElement($loginResult->loginCmsReturn)), true);
 
         $this->tokenAuthorization = new TokenAuthorization(
-            $response->credentials->token,
-            $response->credentials->sign,
-            Carbon::make($response->header->expirationTime)
+            $response['credentials']['token'],
+            $response['credentials']['sign'],
+            Carbon::make($response['header']['expirationTime'])
         );
 
         return $this->tokenAuthorization;

@@ -4,7 +4,9 @@ namespace litvinjuan\LaravelAfip\WebServices;
 
 use litvinjuan\LaravelAfip\AfipAuthentication;
 use litvinjuan\LaravelAfip\Enum\AfipService;
+use litvinjuan\LaravelAfip\Exceptions\AfipException;
 use litvinjuan\LaravelAfip\TokenAuthorization;
+use litvinjuan\LaravelAfip\Transformers\Transformer;
 use SoapClient;
 
 abstract class WebService
@@ -23,7 +25,7 @@ abstract class WebService
         $client = new SoapClient(
             $this->getWdsl(),
             [
-                'soap_version' => SOAP_1_2,
+                'soap_version' => $this->getSoapVersioin(),
                 'location' => $this->getUrl(),
                 'trace' => 1,
                 'stream_context' => stream_context_create([
@@ -36,10 +38,25 @@ abstract class WebService
             ]
         );
 
-        return $client->__soapCall($name, $params);
+        try {
+            $response = $client->{$name}($params);
+            $jsonResponse = json_decode(json_encode($response), true)[$this->getReturnKey()];
+            return $this->getTransformer()->transform($jsonResponse);
+        } catch (\SoapFault $exception) {
+            throw new AfipException($exception);
+        }
     }
 
     abstract protected function getAfipService(): AfipService;
+
+    abstract protected function getReturnKey(): string;
+
+    abstract protected function getSoapVersioin(): int;
+
+    protected function getTransformer(): ?Transformer
+    {
+        return null;
+    }
 
     protected function getTokenAuthorization()
     {
@@ -61,12 +78,12 @@ abstract class WebService
 
     private function getWdsl()
     {
-        return __DIR__.'/wsdl/'.$this->getWdslFilename();
+        return __DIR__.'/../wsdl/'.$this->getWdslFilename();
     }
 
     private function getWdslFilename()
     {
-        if ($this->production) {
+        if ($this->isProduction()) {
             return match ($this->getAfipService()) {
                 AfipService::wsaa => 'wsaa-production.wsdl',
                 AfipService::wsfe => 'wsfe-production.wsdl',
@@ -89,7 +106,7 @@ abstract class WebService
 
     private function getUrl()
     {
-        if ($this->production) {
+        if ($this->isProduction()) {
             return match ($this->getAfipService()) {
                 AfipService::wsaa => 'https://wsaa.afip.gov.ar/ws/services/LoginCms',
                 AfipService::wsfe => 'https://servicios1.afip.gov.ar/wsfev1/service.asmx',

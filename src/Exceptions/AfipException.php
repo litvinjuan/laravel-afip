@@ -4,7 +4,7 @@ namespace litvinjuan\LaravelAfip\Exceptions;
 
 use Exception;
 
-class AfipAuthenticationException extends Exception
+class AfipException extends Exception
 {
     public function __construct(private readonly Exception $original_exception)
     {
