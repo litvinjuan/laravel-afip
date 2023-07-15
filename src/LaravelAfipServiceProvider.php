@@ -2,7 +2,7 @@
 
 namespace litvinjuan\LaravelAfip;
 
-use Illuminate\Support\Facades\Storage;
+use litvinjuan\LaravelAfip\Commands\InstallLaravelAfipCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -13,10 +13,6 @@ class LaravelAfipServiceProvider extends PackageServiceProvider
         $package
             ->name('laravel-afip')
             ->hasConfigFile()
-            ->hasInstallCommand(function () {
-                Storage::disk(config('afip.certificates-disk'))->makeDirectory(config('afip.certificates-directory', ''));
-                Storage::disk(config('afip.certificates-disk'))->put(config('afip.certificates-directory').'/cert', '');
-                Storage::disk(config('afip.certificates-disk'))->put(config('afip.certificates-directory').'/key', '');
-            });
+            ->hasCommand(InstallLaravelAfipCommand::class);
     }
 }
