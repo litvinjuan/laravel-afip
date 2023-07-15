@@ -11,14 +11,11 @@ abstract class WebService
 {
     protected string $cuit;
 
-    protected bool $production;
+    private ?TokenAuthorization $tokenAuthorization = null;
 
-    private TokenAuthorization $tokenAuthorization;
-
-    public function __construct(string $cuit, bool $production)
+    public function __construct(string $cuit)
     {
         $this->cuit = $cuit;
-        $this->production = $production;
     }
 
     protected function call(string $name, array $params)
@@ -50,11 +47,16 @@ abstract class WebService
             $this->tokenAuthorization = AfipAuthentication::getTokenAuthorizationForService(
                 $this->cuit,
                 $this->getAfipService(),
-                $this->production
+                $this->isProduction()
             );
         }
 
         return $this->tokenAuthorization;
+    }
+
+    public function isProduction()
+    {
+        return config('afip.production');
     }
 
     private function getWdsl()

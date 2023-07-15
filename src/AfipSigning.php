@@ -2,6 +2,7 @@
 
 namespace litvinjuan\LaravelAfip;
 
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use litvinjuan\LaravelAfip\Exceptions\AfipSigningException;
 
@@ -23,6 +24,7 @@ class AfipSigning
                 throw new AfipSigningException('There was an error while signing using the certificate and key');
             }
         } catch (\Exception $exception) {
+            Log::error($exception);
             throw new AfipSigningException('There was an error while signing using the certificate and key');
         }
 

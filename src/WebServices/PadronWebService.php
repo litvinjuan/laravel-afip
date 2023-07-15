@@ -9,11 +9,11 @@ class PadronWebService extends WebService
 {
     private AfipPadron $afipPadron;
 
-    public function __construct(string $cuit, AfipPadron $afipPadron, bool $production = true)
+    public function __construct(string $cuit, AfipPadron $afipPadron)
     {
         $this->afipPadron = $afipPadron;
 
-        parent::__construct($cuit, $production);
+        parent::__construct($cuit);
     }
 
     protected function getAfipService(): AfipService
@@ -28,7 +28,7 @@ class PadronWebService extends WebService
 
     public function getPerson(string $cuit)
     {
-        $this->call('getPersona', [
+        return $this->call('getPersona', [
             'token' => $this->getTokenAuthorization()->getToken(),
             'sign' => $this->getTokenAuthorization()->getSign(),
             'cuitRepresentada' => $this->cuit,

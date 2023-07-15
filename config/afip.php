@@ -5,4 +5,6 @@ return [
     'certificates-directory' => '/certificates',
 
     'key-passphrase' => env('AFIP-KEY-PASSPHRASE'),
+
+    'production' => (bool) env('AFIP-PRODUCTION', false),
 ];

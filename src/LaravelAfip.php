@@ -7,18 +7,8 @@ use litvinjuan\LaravelAfip\WebServices\PadronWebService;
 
 class LaravelAfip
 {
-    private string $cuit;
-
-    private bool $production;
-
-    public function init(string $cuit, bool $production = true)
+    public static function padron(string $cuit, AfipPadron $padron): PadronWebService
     {
-        $this->cuit = $cuit;
-        $this->production = $production;
-    }
-
-    public function padron(AfipPadron $afipPadron): PadronWebService
-    {
-        return new PadronWebService($this->cuit, $afipPadron, $this->production);
+        return new PadronWebService($cuit, $padron);
     }
 }
