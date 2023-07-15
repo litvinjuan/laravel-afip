@@ -41,6 +41,7 @@ abstract class WebService
         try {
             $response = $client->{$name}($params);
             $jsonResponse = json_decode(json_encode($response), true)[$this->getReturnKey()];
+
             return $this->getTransformer()->transform($jsonResponse);
         } catch (\SoapFault $exception) {
             throw new AfipException($exception);

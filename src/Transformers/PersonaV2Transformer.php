@@ -44,7 +44,7 @@ class PersonaV2Transformer extends Transformer
                     return [$subsection => []];
                 }
 
-                if (!is_array($array[$section][$subsection])) {
+                if (! is_array($array[$section][$subsection])) {
                     return [$subsection => [$array[$section][$subsection]]];
                 }
 
