@@ -39,7 +39,9 @@
     "autoload": {
         "psr-4": {
             "litvinjuan\\LaravelAfip\\": "src/",
-            "litvinjuan\\LaravelAfip\\Database\\Factories\\": "database/factories/"
+            "litvinjuan\\LaravelAfip\\Enum\\": "src/Enum",
+            "litvinjuan\\LaravelAfip\\Exceptions\\": "src/Exceptions",
+            "litvinjuan\\LaravelAfip\\WebServices\\": "src/WebServices"
         }
     },
     "autoload-dev": {
