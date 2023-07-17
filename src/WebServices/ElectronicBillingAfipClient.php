@@ -14,6 +14,7 @@ use litvinjuan\LaravelAfip\Exceptions\AfipException;
 class ElectronicBillingAfipClient
 {
     private string $cuit;
+
     private AfipClient $client;
 
     public function __construct(string $cuit)
@@ -73,77 +74,77 @@ class ElectronicBillingAfipClient
     public function getPointsOfSale(): array
     {
         return $this->client->call('FEParamGetPtosVenta', [
-            'Auth' => $this->getAuthData()
+            'Auth' => $this->getAuthData(),
         ])['ResultGet']['PtosVenta'];
     }
 
     public function getActivities(): array
     {
         return $this->client->call('FEParamGetActividades', [
-            'Auth' => $this->getAuthData()
+            'Auth' => $this->getAuthData(),
         ]);
     }
 
     public function getMaxInvoicesPerRequest(): int
     {
         return $this->client->call('FECompTotXRequest', [
-            'Auth' => $this->getAuthData()
+            'Auth' => $this->getAuthData(),
         ])['RegXReq'];
     }
 
     public function getInvoiceTypes(): array
     {
         return $this->client->call('FEParamGetTiposCbte', [
-            'Auth' => $this->getAuthData()
+            'Auth' => $this->getAuthData(),
         ])['ResultGet']['CbteTipo'];
     }
 
     public function getConceptTypes(): array
     {
         return $this->client->call('FEParamGetTiposConcepto', [
-            'Auth' => $this->getAuthData()
+            'Auth' => $this->getAuthData(),
         ])['ResultGet']['ConceptoTipo'];
     }
 
     public function getDocumentTypes(): array
     {
         return $this->client->call('FEParamGetTiposDoc', [
-            'Auth' => $this->getAuthData()
+            'Auth' => $this->getAuthData(),
         ])['ResultGet']['DocTipo'];
     }
 
     public function getIVATypes(): array
     {
         return $this->client->call('FEParamGetTiposIva', [
-            'Auth' => $this->getAuthData()
+            'Auth' => $this->getAuthData(),
         ])['ResultGet']['IvaTipo'];
     }
 
     public function getCountries(): array
     {
         return $this->client->call('FEParamGetTiposPaises', [
-            'Auth' => $this->getAuthData()
+            'Auth' => $this->getAuthData(),
         ])['ResultGet']['PaisTipo'];
     }
 
     public function getCurrencies(): array
     {
         return $this->client->call('FEParamGetTiposMonedas', [
-            'Auth' => $this->getAuthData()
+            'Auth' => $this->getAuthData(),
         ])['ResultGet']['Moneda'];
     }
 
     public function getOptionalTypes(): array
     {
         return $this->client->call('FEParamGetTiposOpcional', [
-            'Auth' => $this->getAuthData()
+            'Auth' => $this->getAuthData(),
         ])['ResultGet']['OpcionalTipo'];
     }
 
     public function getTributeTypes(): array
     {
         return $this->client->call('FEParamGetTiposTributos', [
-            'Auth' => $this->getAuthData()
+            'Auth' => $this->getAuthData(),
         ])['ResultGet']['TributoTipo'];
     }
 

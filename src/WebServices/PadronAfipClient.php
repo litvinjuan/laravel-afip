@@ -13,9 +13,13 @@ use litvinjuan\LaravelAfip\Transformers\Transformer;
 class PadronAfipClient
 {
     private string $cuit;
+
     private AfipClient $padron4Client;
+
     private AfipClient $padron5Client;
+
     private AfipClient $padron10Client;
+
     private AfipClient $padron13Client;
 
     public function __construct(string $cuit)
