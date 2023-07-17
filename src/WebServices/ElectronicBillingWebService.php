@@ -60,7 +60,10 @@ class ElectronicBillingWebService extends WebService
 
     public function createInvoice(AfipInvoiceType $invoiceType, int $pointOfSale, array $invoice): array
     {
-        return $this->createInvoices($invoiceType, $pointOfSale, [$invoice]);
+        $invoices = $this->createInvoices($invoiceType, $pointOfSale, [$invoice]);
+
+        // Only one invoice is created, so only the results for this invoice are returned
+        return Arr::get($invoices, 0);
     }
 
     public function getInvoice(AfipInvoiceType $invoiceType, int $pointOfSale, int $invoiceNumber): ?array
@@ -180,15 +183,15 @@ class ElectronicBillingWebService extends WebService
                     'PtoVta' => $pointOfSale,
                     'CbteTipo' => $invoiceType->value,
                 ],
-                'FeDetReq' => collect($invoices)->mapWithKeys(function ($invoice, $index) use ($lastInvoiceNumber, $invoiceType) {
-                    $number = $lastInvoiceNumber + $index + 1;
+                'FeDetReq' => [
+                    'FECAEDetRequest' => collect($invoices)->map(function ($invoice, $index) use ($lastInvoiceNumber, $invoiceType) {
+                        $number = $lastInvoiceNumber + $index + 1;
 
-                    if ($invoiceType->letter() === AfipInvoiceLetter::C && Arr::has($invoice, 'subtotal')) {
-                        $invoice['net_taxed_total'] = Arr::get($invoice, 'subtotal');
-                    }
+                        if ($invoiceType->letter() === AfipInvoiceLetter::C && Arr::has($invoice, 'subtotal')) {
+                            $invoice['net_taxed_total'] = Arr::get($invoice, 'subtotal');
+                        }
 
-                    return [
-                        'FECAEDetRequest' => collect([
+                        return collect([
                             'Concepto' => $this->getConceptId($invoice),
                             'DocNro' => Arr::get($invoice, 'customer.id', 0),
                             'DocTipo' => Arr::get($invoice, 'customer.id_type', 99),
@@ -255,30 +258,45 @@ class ElectronicBillingWebService extends WebService
                                     'Id' => Arr::get($activity, 'id'),
                                 ];
                             })->filter()->toArray(),
-                        ])->reject(function ($value) {
-                            return is_null($value);
-                        })->reject(function ($value) {
-                            return is_array($value) && empty($value);
-                        })->toArray(),
-                    ];
-                })->toArray(),
+                        ])
+                            ->reject(function ($value) {
+                                return is_null($value);
+                            })
+                            ->reject(function ($value) {
+                                return is_array($value) && empty($value);
+                            })
+                            ->toArray();
+                    })->toArray(),
+                ],
             ],
         ];
 
         $response = $this->call('FECAESolicitar', $data);
 
-        $status = Arr::get($response, 'FeDetResp.FECAEDetResponse.Resultado', 'R') !== 'R';
-        $cae = Arr::get($response, 'FeDetResp.FECAEDetResponse.CAE');
-        $caeExpirationDate = Carbon::parse(Arr::get($response, 'FeDetResp.FECAEDetResponse.CAEFchVto'));
+        $createdInvoices = Arr::get($response, 'FeDetResp.FECAEDetResponse');
 
-        $errors = $this->getObservations($response);
+        if (! array_is_list($createdInvoices)) {
+            $createdInvoices = [$createdInvoices];
+        }
 
-        return [
-            'status' => $status,
-            'cae' => $cae,
-            'cae_expiration_date' => $caeExpirationDate,
-            'errors' => $errors,
-        ];
+        return collect($createdInvoices)
+            ->map(function ($invoice) {
+                $created = Arr::get($invoice, 'Resultado', 'R') !== 'R';
+                $errors = $this->getObservations($invoice);
+
+                return collect([
+                    'created' => $created,
+                    'cae' => $created ? Arr::get($invoice, 'CAE') : null,
+                    'cae_expiration_date' => $created ? $this->parseDate(Arr::get($invoice, 'CAEFchVto')) : null,
+                    'invoice_number' => $created ? Arr::get($invoice, 'CbteDesde') : null,
+                    'errors' => $errors,
+                ])
+                    ->reject(function ($value) {
+                        return is_null($value);
+                    })
+                    ->toArray();
+            })
+            ->toArray();
     }
 
     private function formatDate(string|DateTimeInterface|null $date): ?string
@@ -288,6 +306,15 @@ class ElectronicBillingWebService extends WebService
         }
 
         return Carbon::parse($date)->format('Ymd');
+    }
+
+    private function parseDate(string|DateTimeInterface|null $date): ?Carbon
+    {
+        if (! $date) {
+            return null;
+        }
+
+        return Carbon::parse($date);
     }
 
     private function getTotal(array $invoice): float
@@ -339,11 +366,15 @@ class ElectronicBillingWebService extends WebService
         return $concept;
     }
 
-    private function getObservations(array $response): array
+    private function getObservations(array $invoice): array
     {
-        $observations = Arr::get($response, 'FeDetResp.FECAEDetResponse.Observaciones.Obs');
+        $observations = Arr::get($invoice, 'Observaciones.Obs');
 
-        if (! Arr::has($observations, 0) && ! empty($observations)) {
+        if (! $observations) {
+            return [];
+        }
+
+        if (! array_is_list($observations)) {
             $observations = [$observations];
         }
 

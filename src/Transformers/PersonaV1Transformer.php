@@ -35,10 +35,10 @@ class PersonaV1Transformer extends Transformer
             return [];
         }
 
-        if (Arr::has($array, 0)) {
-            return $array;
+        if (array_is_list($array)) {
+            return [$array];
         }
 
-        return [$array];
+        return $array;
     }
 }

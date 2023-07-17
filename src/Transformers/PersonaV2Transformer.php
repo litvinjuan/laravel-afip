@@ -48,11 +48,11 @@ class PersonaV2Transformer extends Transformer
                     return [$subsection => [$array[$section][$subsection]]];
                 }
 
-                if (Arr::has($array[$section][$subsection], 0)) {
-                    return [$subsection => $array[$section][$subsection]];
+                if (array_is_list($array[$section][$subsection])) {
+                    return [$subsection => [$array[$section][$subsection]]];
                 }
 
-                return [$subsection => [$array[$section][$subsection]]];
+                return [$subsection => $array[$section][$subsection]];
             });
 
             return collect($array[$section])->merge($arrays)->toArray();
