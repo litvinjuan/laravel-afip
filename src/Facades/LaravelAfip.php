@@ -3,13 +3,12 @@
 namespace litvinjuan\LaravelAfip\Facades;
 
 use Illuminate\Support\Facades\Facade;
-use litvinjuan\LaravelAfip\Enum\AfipPadron;
-use litvinjuan\LaravelAfip\WebServices\ElectronicBillingWebService;
-use litvinjuan\LaravelAfip\WebServices\PadronWebService;
+use litvinjuan\LaravelAfip\WebServices\ElectronicBillingAfipClient;
+use litvinjuan\LaravelAfip\WebServices\PadronAfipClient;
 
 /**
- * @method static ElectronicBillingWebService electronicBilling(string $cuit)
- * @method static PadronWebService padron(string $cuit, AfipPadron $padron)
+ * @method static ElectronicBillingAfipClient electronicBilling(string $cuit)
+ * @method static PadronAfipClient padron(string $cuit)
  *
  * @see \litvinjuan\LaravelAfip\LaravelAfip
  */

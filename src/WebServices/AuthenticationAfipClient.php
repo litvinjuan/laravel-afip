@@ -4,7 +4,7 @@ namespace litvinjuan\LaravelAfip\WebServices;
 
 use litvinjuan\LaravelAfip\Enum\AfipService;
 
-class AuthenticationWebService extends WebService
+class AuthenticationAfipClient extends AfipClient
 {
     protected function getAfipService(): AfipService
     {

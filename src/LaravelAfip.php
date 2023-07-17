@@ -2,19 +2,18 @@
 
 namespace litvinjuan\LaravelAfip;
 
-use litvinjuan\LaravelAfip\Enum\AfipPadron;
-use litvinjuan\LaravelAfip\WebServices\ElectronicBillingWebService;
-use litvinjuan\LaravelAfip\WebServices\PadronWebService;
+use litvinjuan\LaravelAfip\WebServices\ElectronicBillingAfipClient;
+use litvinjuan\LaravelAfip\WebServices\PadronAfipClient;
 
 class LaravelAfip
 {
-    public static function electronicBilling(string $cuit): ElectronicBillingWebService
+    public function electronicBilling(string $cuit): ElectronicBillingAfipClient
     {
-        return new ElectronicBillingWebService($cuit);
+        return new ElectronicBillingAfipClient($cuit);
     }
 
-    public static function padron(string $cuit, AfipPadron $padron): PadronWebService
+    public function padron(string $cuit): PadronAfipClient
     {
-        return new PadronWebService($cuit, $padron);
+        return new PadronAfipClient($cuit);
     }
 }

@@ -10,38 +10,23 @@ use litvinjuan\LaravelAfip\Enum\AfipInvoiceLetter;
 use litvinjuan\LaravelAfip\Enum\AfipInvoiceType;
 use litvinjuan\LaravelAfip\Enum\AfipService;
 use litvinjuan\LaravelAfip\Exceptions\AfipException;
-use litvinjuan\LaravelAfip\Exceptions\AfipSoapException;
 
-class ElectronicBillingWebService extends WebService
+class ElectronicBillingAfipClient
 {
-    protected function getAfipService(): AfipService
+    private string $cuit;
+    private AfipClient $client;
+
+    public function __construct(string $cuit)
     {
-        return AfipService::wsfe;
-    }
+        $this->cuit = $cuit;
 
-    /**
-     * @throws AfipException
-     * @throws AfipSoapException
-     */
-    private function call(string $name, ?array $params = []): array
-    {
-        $paramsWithAuth = Arr::add($params, 'Auth', $this->getAuthData());
-
-        $response = $this->request($name, $paramsWithAuth);
-
-        $resultKey = "{$name}Result";
-        $result = Arr::get($response, $resultKey);
-
-        if (Arr::has($result, 'Errors')) {
-            $this->throwFirstError($result);
-        }
-
-        return $result;
+        $this->client = new AfipClient($cuit, AfipService::wsfe);
     }
 
     public function getLastInvoiceNumber(AfipInvoiceType $invoiceType, int $pointOfSale): int
     {
-        return $this->call('FECompUltimoAutorizado', [
+        return $this->client->call('FECompUltimoAutorizado', [
+            'Auth' => $this->getAuthData(),
             'PtoVta' => $pointOfSale,
             'CbteTipo' => $invoiceType->value,
         ])['CbteNro'];
@@ -69,7 +54,8 @@ class ElectronicBillingWebService extends WebService
     public function getInvoice(AfipInvoiceType $invoiceType, int $pointOfSale, int $invoiceNumber): ?array
     {
         try {
-            return $this->call('FECompConsultar', [
+            return $this->client->call('FECompConsultar', [
+                'Auth' => $this->getAuthData(),
                 'FeCompConsReq' => [
                     'PtoVta' => $pointOfSale,
                     'CbteTipo' => $invoiceType->value,
@@ -86,62 +72,84 @@ class ElectronicBillingWebService extends WebService
 
     public function getPointsOfSale(): array
     {
-        return $this->call('FEParamGetPtosVenta')['ResultGet']['PtosVenta'];
+        return $this->client->call('FEParamGetPtosVenta', [
+            'Auth' => $this->getAuthData()
+        ])['ResultGet']['PtosVenta'];
     }
 
     public function getActivities(): array
     {
-        return $this->call('FEParamGetActividades');
+        return $this->client->call('FEParamGetActividades', [
+            'Auth' => $this->getAuthData()
+        ]);
     }
 
     public function getMaxInvoicesPerRequest(): int
     {
-        return $this->call('FECompTotXRequest')['RegXReq'];
+        return $this->client->call('FECompTotXRequest', [
+            'Auth' => $this->getAuthData()
+        ])['RegXReq'];
     }
 
     public function getInvoiceTypes(): array
     {
-        return $this->call('FEParamGetTiposCbte')['ResultGet']['CbteTipo'];
+        return $this->client->call('FEParamGetTiposCbte', [
+            'Auth' => $this->getAuthData()
+        ])['ResultGet']['CbteTipo'];
     }
 
     public function getConceptTypes(): array
     {
-        return $this->call('FEParamGetTiposConcepto')['ResultGet']['ConceptoTipo'];
+        return $this->client->call('FEParamGetTiposConcepto', [
+            'Auth' => $this->getAuthData()
+        ])['ResultGet']['ConceptoTipo'];
     }
 
     public function getDocumentTypes(): array
     {
-        return $this->call('FEParamGetTiposDoc')['ResultGet']['DocTipo'];
+        return $this->client->call('FEParamGetTiposDoc', [
+            'Auth' => $this->getAuthData()
+        ])['ResultGet']['DocTipo'];
     }
 
     public function getIVATypes(): array
     {
-        return $this->call('FEParamGetTiposIva')['ResultGet']['IvaTipo'];
+        return $this->client->call('FEParamGetTiposIva', [
+            'Auth' => $this->getAuthData()
+        ])['ResultGet']['IvaTipo'];
     }
 
     public function getCountries(): array
     {
-        return $this->call('FEParamGetTiposPaises')['ResultGet']['PaisTipo'];
+        return $this->client->call('FEParamGetTiposPaises', [
+            'Auth' => $this->getAuthData()
+        ])['ResultGet']['PaisTipo'];
     }
 
     public function getCurrencies(): array
     {
-        return $this->call('FEParamGetTiposMonedas')['ResultGet']['Moneda'];
+        return $this->client->call('FEParamGetTiposMonedas', [
+            'Auth' => $this->getAuthData()
+        ])['ResultGet']['Moneda'];
     }
 
     public function getOptionalTypes(): array
     {
-        return $this->call('FEParamGetTiposOpcional')['ResultGet']['OpcionalTipo'];
+        return $this->client->call('FEParamGetTiposOpcional', [
+            'Auth' => $this->getAuthData()
+        ])['ResultGet']['OpcionalTipo'];
     }
 
     public function getTributeTypes(): array
     {
-        return $this->call('FEParamGetTiposTributos')['ResultGet']['TributoTipo'];
+        return $this->client->call('FEParamGetTiposTributos', [
+            'Auth' => $this->getAuthData()
+        ])['ResultGet']['TributoTipo'];
     }
 
     public function status(): bool
     {
-        $result = $this->call('FEDummy', []);
+        $result = $this->client->call('FEDummy');
 
         return collect($result['FEDummyResult'])
             ->every(function ($value, $key) {
@@ -152,15 +160,10 @@ class ElectronicBillingWebService extends WebService
     private function getAuthData(): array
     {
         return [
-            'Token' => $this->getTokenAuthorization()->getToken(),
-            'Sign' => $this->getTokenAuthorization()->getSign(),
+            'Token' => $this->client->getToken(),
+            'Sign' => $this->client->getSign(),
             'Cuit' => $this->cuit,
         ];
-    }
-
-    protected function getSoapVersioin(): int
-    {
-        return SOAP_1_1;
     }
 
     /**
@@ -271,7 +274,10 @@ class ElectronicBillingWebService extends WebService
             ],
         ];
 
-        $response = $this->call('FECAESolicitar', $data);
+        $response = $this->client->call('FECAESolicitar', [
+            'Auth' => $this->getAuthData(),
+            ...$data,
+        ]);
 
         $createdInvoices = Arr::get($response, 'FeDetResp.FECAEDetResponse');
 
