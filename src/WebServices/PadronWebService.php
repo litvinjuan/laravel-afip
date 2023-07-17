@@ -2,8 +2,12 @@
 
 namespace litvinjuan\LaravelAfip\WebServices;
 
+use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use litvinjuan\LaravelAfip\Enum\AfipPadron;
 use litvinjuan\LaravelAfip\Enum\AfipService;
+use litvinjuan\LaravelAfip\Exceptions\AfipException;
+use litvinjuan\LaravelAfip\Exceptions\AfipSoapException;
 use litvinjuan\LaravelAfip\Transformers\PersonaV1Transformer;
 use litvinjuan\LaravelAfip\Transformers\PersonaV2Transformer;
 use litvinjuan\LaravelAfip\Transformers\Transformer;
@@ -37,14 +41,50 @@ class PadronWebService extends WebService
         };
     }
 
-    public function getPerson(string $cuit): mixed
+    /**
+     * @throws AfipException
+     * @throws AfipSoapException
+     */
+    private function call(string $name, ?array $params = []): array
     {
-        return $this->call($this->getMethodName(), [
-            'token' => $this->getTokenAuthorization()->getToken(),
-            'sign' => $this->getTokenAuthorization()->getSign(),
-            'cuitRepresentada' => $this->cuit,
-            'idPersona' => $cuit,
-        ]);
+        $paramsWithAuth = array_merge($params, $this->getAuthData());
+
+        $response = $this->request($name, $paramsWithAuth);
+
+        $resultKey = "{$name}Result";
+        $result = Arr::get($response, $resultKey);
+
+        if (Arr::has($result, 'Errors')) {
+            $this->throwFirstError($result);
+        }
+
+        return $result;
+    }
+
+    public function getPerson(string $cuit): ?array
+    {
+        try {
+            $response = $this->call($this->getMethodName(), [
+                'idPersona' => $cuit,
+            ]);
+        } catch (AfipSoapException $exception) {
+            if (Str::contains($exception->getMessage(), 'No existe persona con ese Id')) {
+                return null;
+            }
+            throw $exception;
+        }
+
+        return $this->getTransformer()->transform($response['personaReturn']);
+    }
+
+    public function status(): bool
+    {
+        $result = $this->call('dummy');
+
+        return collect($result['return'])
+            ->every(function ($value, $key) {
+                return $value === 'OK';
+            });
     }
 
     protected function getTransformer(): ?Transformer
@@ -55,13 +95,26 @@ class PadronWebService extends WebService
         };
     }
 
-    protected function getReturnKey(): string
-    {
-        return 'personaReturn';
-    }
-
     protected function getSoapVersioin(): int
     {
         return SOAP_1_1;
+    }
+
+    private function getAuthData(): array
+    {
+        return [
+            'token' => $this->getTokenAuthorization()->getToken(),
+            'sign' => $this->getTokenAuthorization()->getSign(),
+            'cuitRepresentada' => $this->cuit,
+        ];
+    }
+
+    /**
+     * @throws AfipException
+     */
+    private function throwFirstError(array $result): void
+    {
+        $error = $result['Errors']['Err'];
+        throw new AfipException($error['Msg'], $error['Code']);
     }
 }

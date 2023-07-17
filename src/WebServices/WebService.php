@@ -4,9 +4,8 @@ namespace litvinjuan\LaravelAfip\WebServices;
 
 use litvinjuan\LaravelAfip\AfipAuthentication;
 use litvinjuan\LaravelAfip\Enum\AfipService;
-use litvinjuan\LaravelAfip\Exceptions\AfipException;
+use litvinjuan\LaravelAfip\Exceptions\AfipSoapException;
 use litvinjuan\LaravelAfip\TokenAuthorization;
-use litvinjuan\LaravelAfip\Transformers\Transformer;
 use SoapClient;
 
 abstract class WebService
@@ -20,7 +19,7 @@ abstract class WebService
         $this->cuit = $cuit;
     }
 
-    protected function call(string $name, array $params)
+    protected function request(string $name, array $params)
     {
         $client = new SoapClient(
             $this->getWdsl(),
@@ -40,23 +39,16 @@ abstract class WebService
 
         try {
             $response = $client->{$name}($params);
-            $jsonResponse = json_decode(json_encode($response), true)[$this->getReturnKey()];
-            return $this->getTransformer()->transform($jsonResponse);
+
+            return json_decode(json_encode($response), true);
         } catch (\SoapFault $exception) {
-            throw new AfipException($exception);
+            throw new AfipSoapException($exception);
         }
     }
 
     abstract protected function getAfipService(): AfipService;
 
-    abstract protected function getReturnKey(): string;
-
     abstract protected function getSoapVersioin(): int;
-
-    protected function getTransformer(): ?Transformer
-    {
-        return null;
-    }
 
     protected function getTokenAuthorization()
     {

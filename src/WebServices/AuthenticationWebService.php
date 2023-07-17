@@ -13,8 +13,13 @@ class AuthenticationWebService extends WebService
 
     public function login(string $cms): mixed
     {
-        return $this->call('loginCms', [
+        return $this->request('loginCms', [
             'in0' => $this->cms,
         ]);
+    }
+
+    protected function getSoapVersioin(): int
+    {
+        return SOAP_1_2;
     }
 }
