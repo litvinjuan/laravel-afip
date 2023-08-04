@@ -1,10 +1,11 @@
 <?php
 
 return [
-    'certificates-disk' => 'afip',
-    'certificates-directory' => '/certificates',
+    'certificate' => env('AFIP_CERTIFICATE', ''),
 
-    'key-passphrase' => env('AFIP-KEY-PASSPHRASE'),
+    'key' => env('AFIP_KEY', ''),
 
-    'production' => (bool) env('AFIP-PRODUCTION', false),
+    'key-passphrase' => env('AFIP_KEY_PASSPHRASE'),
+
+    'production' => (bool) env('AFIP_PRODUCTION', false),
 ];

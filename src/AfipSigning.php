@@ -3,7 +3,6 @@
 namespace litvinjuan\LaravelAfip;
 
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use litvinjuan\LaravelAfip\Exceptions\AfipSigningException;
 
 class AfipSigning
@@ -45,18 +44,12 @@ class AfipSigning
 
     private static function getCert()
     {
-        $certPath = config('afip.certificates-directory').'/cert';
-        $cert = Storage::disk(config('afip.certificates-disk'))->path($certPath);
-
-        return file_get_contents($cert);
+        return config('afip.certificate');
     }
 
     private static function getKey()
     {
-        $keyPath = config('afip.certificates-directory').'/key';
-        $key = Storage::disk(config('afip.certificates-disk'))->path($keyPath);
-
-        return file_get_contents($key);
+        return config('afip.key');
     }
 
     private static function getPassphrase()

@@ -21,7 +21,7 @@ enum AfipConcept: int
     {
         return match ($this) {
             self::Productos => false,
-            self::Servicios, self::ProductosYServicios => false,
+            self::Servicios, self::ProductosYServicios => true,
         };
     }
 }
