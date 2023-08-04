@@ -17,6 +17,7 @@ class AfipClient
     private ?TokenAuthorization $tokenAuthorization = null;
 
     private SoapClient $soapClient;
+
     private AfipService $afipService;
 
     public function __construct(string $cuit, AfipService $afipService)
@@ -159,7 +160,7 @@ class AfipClient
         return match ($this->afipService) {
             AfipService::wsaa => "{$name}Return",
             AfipService::wsfe => "{$name}Result",
-            AfipService::padron4, AfipService::padron5, AfipService::padron10, AfipService::padron13 => "personaReturn",
+            AfipService::padron4, AfipService::padron5, AfipService::padron10, AfipService::padron13 => 'personaReturn',
         };
     }
 }
