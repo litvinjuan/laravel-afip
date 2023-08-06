@@ -2,7 +2,6 @@
 
 namespace litvinjuan\LaravelAfip;
 
-use litvinjuan\LaravelAfip\Commands\InstallLaravelAfipCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -12,7 +11,6 @@ class LaravelAfipServiceProvider extends PackageServiceProvider
     {
         $package
             ->name('laravel-afip')
-            ->hasConfigFile()
-            ->hasCommand(InstallLaravelAfipCommand::class);
+            ->hasConfigFile();
     }
 }

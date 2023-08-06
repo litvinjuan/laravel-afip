@@ -20,7 +20,6 @@
         "ext-openssl": "*",
         "ext-simplexml": "*",
         "ext-soap": "*",
-        "illuminate/contracts": "^10.0",
         "spatie/laravel-package-tools": "^1.14.0",
         "spatie/temporary-directory": "^2.1"
     },
