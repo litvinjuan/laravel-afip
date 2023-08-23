@@ -11,6 +11,6 @@ class LaravelAfipServiceProvider extends PackageServiceProvider
     {
         $package
             ->name('laravel-afip')
-            ->hasConfigFile();
+            ->hasConfigFile('afip');
     }
 }
