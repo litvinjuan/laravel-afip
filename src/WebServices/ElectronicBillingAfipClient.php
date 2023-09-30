@@ -49,7 +49,14 @@ class ElectronicBillingAfipClient
         $invoices = $this->createInvoices($invoiceType, $pointOfSale, [$invoice]);
 
         // Only one invoice is created, so only the results for this invoice are returned
-        return Arr::get($invoices, 0);
+        $invoice = Arr::get($invoices, 0);
+
+        if (! empty($invoice['errors'])) {
+            $error = $invoice['errors'][0];
+            throw new AfipException($error['message'], $error['code']);
+        }
+
+        return $invoice;
     }
 
     public function getInvoice(AfipInvoiceType $invoiceType, int $pointOfSale, int $invoiceNumber): ?array
