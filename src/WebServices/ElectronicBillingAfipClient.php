@@ -72,6 +72,7 @@ class ElectronicBillingAfipClient
             ]);
         } catch (AfipException $exception) {
             if ($exception->getCode() === 602) {
+                // Not found in AFIP
                 return null;
             }
             throw $exception;
