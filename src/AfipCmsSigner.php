@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Log;
 use litvinjuan\LaravelAfip\Exceptions\AfipSigningException;
 use Spatie\TemporaryDirectory\TemporaryDirectory;
 
-class AfipSigner
+class AfipCmsSigner
 {
     private string $certificate;
 
@@ -32,13 +32,13 @@ class AfipSigner
         File::put($input_filename, $input);
 
         try {
-            $result = openssl_pkcs7_sign(
+            $result = openssl_cms_sign(
                 $input_filename,
                 $output_filename,
                 $this->getCertificate(),
                 [$this->getPrivateKey(), $this->getPrivateKeyPassphrase()],
                 [],
-                ! PKCS7_DETACHED
+                ! OPENSSL_CMS_DETACHED
             );
 
             if (! $result) {
@@ -49,21 +49,23 @@ class AfipSigner
             throw new AfipSigningException('There was an error while signing using the certificate and key');
         }
 
-        $file = fopen($output_filename, 'r');
-        $i = 0;
-
-        $signed = '';
-        while (! feof($file)) {
-            $buffer = fgets($file);
-            if ($i++ >= 4) {
-                $signed .= $buffer;
-            }
-        }
-        fclose($file);
-
+        $cms = $this->getCmsFromCmsOutputFile($output_filename);
         $temporaryDirectory->delete();
 
-        return $signed;
+        return $cms;
+    }
+
+    private function getCmsFromCmsOutputFile(string $output_filename): string
+    {
+        $cms = File::get($output_filename);
+
+        $lastHeader = "Content-Transfer-Encoding: base64";
+        $lastHeaderPosition = strpos($cms, $lastHeader);
+        $lastHeaderLength = strlen($lastHeader);
+
+        return trim(
+            substr($cms, $lastHeaderPosition + $lastHeaderLength)
+        );
     }
 
     private function getCertificate()

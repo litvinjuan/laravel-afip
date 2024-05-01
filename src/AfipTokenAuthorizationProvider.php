@@ -37,9 +37,9 @@ class AfipTokenAuthorizationProvider
     private static function getCacheKey(AfipConfiguration $configuration, AfipService $service): string
     {
         if ($configuration->isProduction()) {
-            return "AFIP-TA-{$service->name}";
+            return "AFIP-TA-{$configuration->getPublicIdentifier()}-{$service->name}";
         }
 
-        return "AFIP-TA-{$service->name}-dev";
+        return "AFIP-TA-{$configuration->getPublicIdentifier()}-{$service->name}-dev";
     }
 }

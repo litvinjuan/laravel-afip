@@ -14,7 +14,7 @@ class AfipConfiguration
 
     private bool $production_mode;
 
-    private AfipSigner $signer;
+    private AfipCmsSigner $signer;
 
     public function __construct(string $cuit = null, string $certificate = null, string $private_key = null, string $private_key_passphrase = null, bool $production_mode = true)
     {
@@ -24,14 +24,14 @@ class AfipConfiguration
         $this->private_key_passphrase = $private_key_passphrase ?? config('afip.key-passphrase');
         $this->production_mode = $production_mode ?? config('afip.production', false);
 
-        $this->signer = new AfipSigner(
+        $this->signer = new AfipCmsSigner(
             $this->certificate,
             $this->private_key,
             $this->private_key_passphrase
         );
     }
 
-    public function getSigner(): AfipSigner
+    public function getSigner(): AfipCmsSigner
     {
         return $this->signer;
     }
@@ -44,5 +44,13 @@ class AfipConfiguration
     public function getCuit(): string
     {
         return $this->cuit;
+    }
+
+    public function getPublicIdentifier(): string
+    {
+        $privateKey = openssl_pkey_get_private($this->private_key, $this->private_key_passphrase);
+        $publicKey = openssl_pkey_get_details($privateKey)['key'];
+
+        return hash('sha256', $publicKey);
     }
 }

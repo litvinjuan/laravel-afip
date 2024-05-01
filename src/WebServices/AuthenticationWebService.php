@@ -19,7 +19,7 @@ class AuthenticationWebService
         $this->client = new AfipClient(AfipService::wsaa, $this->configuration);
     }
 
-    public function login(string $cms): AfipService
+    public function login(string $cms): array
     {
         try {
             return $this->client->call('loginCms', [

@@ -11,6 +11,7 @@ use litvinjuan\LaravelAfip\Enum\AfipService;
 use litvinjuan\LaravelAfip\Exceptions\AfipException;
 use litvinjuan\LaravelAfip\Exceptions\AfipSoapException;
 use litvinjuan\LaravelAfip\TokenAuthorization;
+use SimpleXMLElement;
 use SoapClient;
 
 class AfipClient
@@ -58,7 +59,7 @@ class AfipClient
             $client = $this->getClient();
             $rawResponse = $client->{$name}($params);
 
-            $response = Arr::get(json_decode(json_encode($rawResponse), true), $this->getReturnKey($name));
+            $response = $this->convertResponseToJson($rawResponse, $name);
 
             if (Arr::has($response, 'Errors')) {
                 $this->throwFirstError($response);
@@ -96,6 +97,17 @@ class AfipClient
     public function getSign(): string
     {
         return $this->getTokenAuthorization()->getSign();
+    }
+
+    private function convertResponseToJson(mixed $response, string $methodName): array
+    {
+        $responseKey = $this->getReturnKey($methodName);
+
+        if ($this->service === AfipService::wsaa) {
+            return json_decode(json_encode(new SimpleXMLElement($response->{$responseKey})), true);
+        }
+
+        return Arr::get(json_decode(json_encode($response), true), $responseKey);
     }
 
     private function getSoapVersion()
