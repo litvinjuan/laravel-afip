@@ -3,59 +3,45 @@
 namespace litvinjuan\LaravelAfip;
 
 use Carbon\Carbon;
-use Illuminate\Support\Facades\File;
 use litvinjuan\LaravelAfip\Enum\AfipService;
-use litvinjuan\LaravelAfip\Exceptions\AfipAuthenticationException;
+use litvinjuan\LaravelAfip\WebServices\AuthenticationWebService;
 use SimpleXMLElement;
-use SoapClient;
-use Spatie\TemporaryDirectory\TemporaryDirectory;
 
 class TokenAuthorizationRequest
 {
-    private string $cuit;
+    private AfipService $service;
 
-    private AfipService $afipService;
+    private AfipConfiguration $configuration;
 
-    private bool $production;
+    private AuthenticationWebService $authenticationWebService;
 
-    private TemporaryDirectory $temporaryDirectory;
-
-    private string $cms;
-
-    private TokenAuthorization $tokenAuthorization;
-
-    public function __construct(string $cuit, AfipService $afipService, bool $production, string $key)
+    public function __construct(AfipConfiguration $configuration, AfipService $service)
     {
-        $this->cuit = $cuit;
-        $this->afipService = $afipService;
-        $this->production = $production;
-
-        $this->temporaryDirectory = (new TemporaryDirectory())->name($this->getKey())->force()->create();
-
-        $this->generateXml();
-        $this->sign();
+        $this->configuration = $configuration;
+        $this->service = $service;
+        $this->authenticationWebService = new AuthenticationWebService($this->configuration);
     }
 
-    private function getKey(): string
+    public function createTokenAuthorization(): TokenAuthorization
     {
-        if ($this->production) {
-            return "TA-{$this->cuit}-{$this->afipService->name}";
-        }
+        $cms = $this->generateCms();
+        $response = $this->authenticationWebService->login($cms);
 
-        return "TA-{$this->cuit}-{$this->afipService->name}-dev";
+        return new TokenAuthorization(
+            $response['credentials']['token'],
+            $response['credentials']['sign'],
+            Carbon::make($response['header']['expirationTime'])
+        );
     }
 
-    private function getXmlPath(): string
+    private function generateCms(): string
     {
-        return $this->temporaryDirectory->path("{$this->getKey()}.xml");
+        return $this->signCms(
+            $this->generateCmsBody()
+        );
     }
 
-    private function getTmpPath(): string
-    {
-        return $this->temporaryDirectory->path("{$this->getKey()}.tmp");
-    }
-
-    private function generateXml(): void
+    private function generateCmsBody(): string
     {
         $tra = new SimpleXMLElement(
             '<?xml version="1.0" encoding="UTF-8"?>'.
@@ -66,15 +52,21 @@ class TokenAuthorizationRequest
         $tra->header->addChild('uniqueId', date('U'));
         $tra->header->addChild('generationTime', date('c', date('U') - 60));
         $tra->header->addChild('expirationTime', date('c', date('U') + 60));
-        $tra->addChild('service', $this->translateAfipService());
-        $xml = $tra->asXML();
+        $tra->addChild('service', $this->translateServiceName());
 
-        File::put($this->getXmlPath(), $xml);
+        return $tra->asXML();
     }
 
-    private function translateAfipService(): string
+    private function signCms(string $cmsBody)
     {
-        return match ($this->afipService) {
+        $signer = $this->configuration->getSigner();
+
+        return $signer->sign($cmsBody);
+    }
+
+    private function translateServiceName(): string
+    {
+        return match ($this->service) {
             AfipService::wsaa => 'wsaa',
             AfipService::wsfe => 'wsfe',
             AfipService::padron4 => 'ws_sr_padron_a4',
@@ -82,69 +74,5 @@ class TokenAuthorizationRequest
             AfipService::padron10 => 'ws_sr_padron_a10',
             AfipService::padron13 => 'ws_sr_padron_a13',
         };
-    }
-
-    private function sign(): void
-    {
-        $xmlPath = $this->getXmlPath();
-        $tmpPath = $this->getTmpPath();
-
-        try {
-            $this->cms = AfipSigning::sign($xmlPath, $tmpPath);
-        } finally {
-            // Delete temporary files regardless of success or failure
-            $this->temporaryDirectory->delete();
-        }
-    }
-
-    public function createTokenAuthorization(): TokenAuthorization
-    {
-        $client = new SoapClient(
-            self::getWsdl(AfipService::wsaa),
-            [
-                'soap_version' => SOAP_1_2,
-                'location' => $this->getWsaaUrl(),
-                'trace' => 1,
-                'stream_context' => stream_context_create([
-                    'ssl' => [
-                        'ciphers' => 'AES256-SHA',
-                        'verify_peer' => false,
-                        'verify_peer_name' => false,
-                    ],
-                ]),
-            ]
-        );
-
-        try {
-            $loginResult = $client->loginCms([
-                'in0' => $this->cms,
-            ]);
-        } catch (\Exception $exception) {
-            throw new AfipAuthenticationException($exception);
-        }
-
-        $response = json_decode(json_encode(new SimpleXMLElement($loginResult->loginCmsReturn)), true);
-
-        $this->tokenAuthorization = new TokenAuthorization(
-            $response['credentials']['token'],
-            $response['credentials']['sign'],
-            Carbon::make($response['header']['expirationTime'])
-        );
-
-        return $this->tokenAuthorization;
-    }
-
-    private function getWsdl(AfipService $afipService): string
-    {
-        return __DIR__.'/wsdl/'.$afipService->name.'.wsdl';
-    }
-
-    private function getWsaaUrl(): string
-    {
-        if ($this->production) {
-            return 'https://wsaa.afip.gov.ar/ws/services/LoginCms';
-        } else {
-            return 'https://wsaahomo.afip.gov.ar/ws/services/LoginCms';
-        }
     }
 }

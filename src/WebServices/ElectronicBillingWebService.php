@@ -5,23 +5,24 @@ namespace litvinjuan\LaravelAfip\WebServices;
 use Carbon\Carbon;
 use DateTimeInterface;
 use Illuminate\Support\Arr;
+use litvinjuan\LaravelAfip\AfipConfiguration;
 use litvinjuan\LaravelAfip\Enum\AfipConcept;
 use litvinjuan\LaravelAfip\Enum\AfipInvoiceLetter;
 use litvinjuan\LaravelAfip\Enum\AfipInvoiceType;
 use litvinjuan\LaravelAfip\Enum\AfipService;
 use litvinjuan\LaravelAfip\Exceptions\AfipException;
 
-class ElectronicBillingAfipClient
+class ElectronicBillingWebService
 {
-    private string $cuit;
+    private AfipConfiguration $configuration;
 
     private AfipClient $client;
 
-    public function __construct(string $cuit)
+    public function __construct(AfipConfiguration $configuration = null)
     {
-        $this->cuit = $cuit;
+        $this->configuration = $configuration ?? new AfipConfiguration();
 
-        $this->client = new AfipClient($cuit, AfipService::wsfe);
+        $this->client = new AfipClient(AfipService::wsfe, $this->configuration);
     }
 
     public function getLastInvoiceNumber(AfipInvoiceType $invoiceType, int $pointOfSale): int
@@ -171,17 +172,8 @@ class ElectronicBillingAfipClient
         return [
             'Token' => $this->client->getToken(),
             'Sign' => $this->client->getSign(),
-            'Cuit' => $this->cuit,
+            'Cuit' => $this->configuration->getCuit(),
         ];
-    }
-
-    /**
-     * @throws AfipException
-     */
-    private function throwFirstError(array $result): void
-    {
-        $error = $result['Errors']['Err'];
-        throw new AfipException($error['Msg'], $error['Code']);
     }
 
     public function createInvoices(AfipInvoiceType $invoiceType, int $pointOfSale, array $invoices): array

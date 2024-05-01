@@ -33,7 +33,6 @@ class PersonaV2Transformer extends Transformer
 
     public function transform(array $array): array
     {
-
         return collect(self::SECTIONS)->map(function ($subsections, $section) use ($array) {
             if (! Arr::has($array, $section)) {
                 return null;
@@ -48,7 +47,7 @@ class PersonaV2Transformer extends Transformer
                     return [$subsection => [$array[$section][$subsection]]];
                 }
 
-                if (array_is_list($array[$section][$subsection])) {
+                if (! array_is_list($array[$section][$subsection])) {
                     return [$subsection => [$array[$section][$subsection]]];
                 }
 

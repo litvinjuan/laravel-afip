@@ -35,7 +35,7 @@ class PersonaV1Transformer extends Transformer
             return [];
         }
 
-        if (array_is_list($array)) {
+        if (! array_is_list($array)) {
             return [$array];
         }
 

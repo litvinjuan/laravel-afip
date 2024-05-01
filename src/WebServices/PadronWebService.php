@@ -3,6 +3,7 @@
 namespace litvinjuan\LaravelAfip\WebServices;
 
 use Illuminate\Support\Str;
+use litvinjuan\LaravelAfip\AfipConfiguration;
 use litvinjuan\LaravelAfip\Enum\AfipPadron;
 use litvinjuan\LaravelAfip\Enum\AfipService;
 use litvinjuan\LaravelAfip\Exceptions\AfipSoapException;
@@ -10,9 +11,9 @@ use litvinjuan\LaravelAfip\Transformers\PersonaV1Transformer;
 use litvinjuan\LaravelAfip\Transformers\PersonaV2Transformer;
 use litvinjuan\LaravelAfip\Transformers\Transformer;
 
-class PadronAfipClient
+class PadronWebService
 {
-    private string $cuit;
+    private AfipConfiguration $configuration;
 
     private AfipClient $padron4Client;
 
@@ -22,19 +23,19 @@ class PadronAfipClient
 
     private AfipClient $padron13Client;
 
-    public function __construct(string $cuit)
+    public function __construct(AfipConfiguration $configuration = null)
     {
-        $this->cuit = $cuit;
+        $this->configuration = $configuration ?? new AfipConfiguration();
 
-        $this->padron4Client = new AfipClient($cuit, AfipService::padron4);
-        $this->padron5Client = new AfipClient($cuit, AfipService::padron5);
-        $this->padron10Client = new AfipClient($cuit, AfipService::padron10);
-        $this->padron13Client = new AfipClient($cuit, AfipService::padron13);
+        $this->padron4Client = new AfipClient(AfipService::padron4, $this->configuration);
+        $this->padron5Client = new AfipClient(AfipService::padron5, $this->configuration);
+        $this->padron10Client = new AfipClient(AfipService::padron10, $this->configuration);
+        $this->padron13Client = new AfipClient(AfipService::padron13, $this->configuration);
     }
 
-    private function getClient(AfipPadron $afipPadron): AfipClient
+    private function getClient(AfipPadron $padron): AfipClient
     {
-        return match ($afipPadron) {
+        return match ($padron) {
             AfipPadron::Padron4 => $this->padron4Client,
             AfipPadron::Padron5 => $this->padron5Client,
             AfipPadron::Padron10 => $this->padron10Client,
@@ -42,9 +43,9 @@ class PadronAfipClient
         };
     }
 
-    public function getMethodName(AfipPadron $afipPadron): string
+    public function getMethodName(AfipPadron $padron): string
     {
-        return match ($afipPadron) {
+        return match ($padron) {
             AfipPadron::Padron4, AfipPadron::Padron10, AfipPadron::Padron13 => 'getPersona',
             AfipPadron::Padron5 => 'getPersona_V2',
         };
@@ -58,7 +59,7 @@ class PadronAfipClient
                 [
                     'token' => $this->getClient($padron)->getToken(),
                     'sign' => $this->getClient($padron)->getSign(),
-                    'cuitRepresentada' => $this->cuit,
+                    'cuitRepresentada' => $this->configuration->getCuit(),
                     'idPersona' => $cuit,
                 ]
             );
