@@ -16,7 +16,7 @@ class AfipConfiguration
 
     private AfipSigner $signer;
 
-    public function __construct(string $cuit = null, string $certificate = null, string $private_key = null, string $private_key_passphrase = null, bool $production_mode = true)
+    public function __construct(?string $cuit = null, ?string $certificate = null, ?string $private_key = null, ?string $private_key_passphrase = null, bool $production_mode = true)
     {
         $this->cuit = $cuit ?? config('afip.cuit');
         $this->certificate = $certificate ?? config('afip.certificate');

@@ -15,7 +15,7 @@ class AfipSigner
 
     private ?string $private_key_passphrase;
 
-    public function __construct(string $certificate, string $private_key, string $private_key_passphrase = null)
+    public function __construct(string $certificate, string $private_key, ?string $private_key_passphrase = null)
     {
         $this->certificate = $certificate;
         $this->private_key = $private_key;

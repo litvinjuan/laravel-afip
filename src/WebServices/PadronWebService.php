@@ -23,7 +23,7 @@ class PadronWebService
 
     private AfipClient $padron13Client;
 
-    public function __construct(AfipConfiguration $configuration = null)
+    public function __construct(?AfipConfiguration $configuration = null)
     {
         $this->configuration = $configuration ?? new AfipConfiguration();
 
