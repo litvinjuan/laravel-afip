@@ -1,43 +1,39 @@
 <?php
 
-namespace litvinjuan\LaravelAfip\WebServices;
+namespace litvinjuan\LaravelAfip\Clients;
 
+use Exception;
 use Illuminate\Support\Arr;
 use litvinjuan\LaravelAfip\AfipConfiguration;
-use litvinjuan\LaravelAfip\AfipTokenAuthorizationProvider;
-use litvinjuan\LaravelAfip\AfipWebServiceUrl;
-use litvinjuan\LaravelAfip\AfipWsdl;
 use litvinjuan\LaravelAfip\Enum\AfipService;
 use litvinjuan\LaravelAfip\Exceptions\AfipException;
 use litvinjuan\LaravelAfip\Exceptions\AfipSoapException;
-use litvinjuan\LaravelAfip\TokenAuthorization;
 use SimpleXMLElement;
 use SoapClient;
+use SoapFault;
 
-class AfipClient
+class AfipSoapClient
 {
-    private ?TokenAuthorization $tokenAuthorization = null;
-
     private ?SoapClient $soapClient = null;
 
     private AfipService $service;
 
     private AfipConfiguration $configuration;
 
+    /**
+     * @throws AfipSoapException
+     */
     public function __construct(AfipService $service, AfipConfiguration $configuration)
     {
         $this->service = $service;
         $this->configuration = $configuration;
-    }
 
-    private function getClient(): SoapClient
-    {
-        if (is_null($this->soapClient)) {
+        try {
             $this->soapClient = new SoapClient(
-                AfipWsdl::for($this->service, $this->configuration),
+                $this->service->getwsdl($this->configuration),
                 [
                     'soap_version' => $this->getSoapVersion(),
-                    'location' => AfipWebServiceUrl::for($this->service, $this->configuration),
+                    'location' => $this->service->getUrl($this->configuration),
                     'trace' => 1,
                     'stream_context' => stream_context_create([
                         'ssl' => [
@@ -48,16 +44,18 @@ class AfipClient
                     ]),
                 ]
             );
+        } catch (SoapFault $exception) {
+            throw new AfipSoapException($exception);
         }
-
-        return $this->soapClient;
     }
 
-    public function call(string $name, ?array $params = [])
+    /**
+     * @throws AfipException|AfipSoapException
+     */
+    public function call(string $name, ?array $params = []): array
     {
         try {
-            $client = $this->getClient();
-            $rawResponse = $client->{$name}($params);
+            $rawResponse = $this->soapClient->{$name}($params);
 
             $response = $this->convertResponseToJson($rawResponse, $name);
 
@@ -66,7 +64,7 @@ class AfipClient
             }
 
             return $response;
-        } catch (\SoapFault $exception) {
+        } catch (SoapFault|Exception $exception) {
             throw new AfipSoapException($exception);
         }
     }
@@ -80,25 +78,9 @@ class AfipClient
         throw new AfipException($error['Msg'], $error['Code']);
     }
 
-    private function getTokenAuthorization(): TokenAuthorization
-    {
-        if (! $this->tokenAuthorization) {
-            $this->tokenAuthorization = AfipTokenAuthorizationProvider::for($this->configuration, $this->service);
-        }
-
-        return $this->tokenAuthorization;
-    }
-
-    public function getToken(): string
-    {
-        return $this->getTokenAuthorization()->getToken();
-    }
-
-    public function getSign(): string
-    {
-        return $this->getTokenAuthorization()->getSign();
-    }
-
+    /**
+     * @throws \Exception
+     */
     private function convertResponseToJson(mixed $response, string $methodName): array
     {
         $responseKey = $this->getReturnKey($methodName);
@@ -110,7 +92,7 @@ class AfipClient
         return Arr::get(json_decode(json_encode($response), true), $responseKey);
     }
 
-    private function getSoapVersion()
+    private function getSoapVersion(): int
     {
         return match ($this->service) {
             AfipService::wsaa, AfipService::wsfe => SOAP_1_2,

@@ -3,6 +3,7 @@
 namespace litvinjuan\LaravelAfip\WebServices;
 
 use litvinjuan\LaravelAfip\AfipConfiguration;
+use litvinjuan\LaravelAfip\Clients\AfipClient;
 use litvinjuan\LaravelAfip\Enum\AfipService;
 use litvinjuan\LaravelAfip\Exceptions\AfipAuthenticationException;
 

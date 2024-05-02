@@ -1,6 +1,6 @@
 <?php
 
-namespace litvinjuan\LaravelAfip;
+namespace litvinjuan\LaravelAfip\Signers;
 
 use File;
 use Illuminate\Support\Facades\Log;

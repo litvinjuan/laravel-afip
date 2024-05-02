@@ -6,11 +6,14 @@ use Carbon\Carbon;
 use DateTimeInterface;
 use Illuminate\Support\Arr;
 use litvinjuan\LaravelAfip\AfipConfiguration;
+use litvinjuan\LaravelAfip\Clients\AfipClient;
 use litvinjuan\LaravelAfip\Enum\AfipConcept;
 use litvinjuan\LaravelAfip\Enum\AfipInvoiceLetter;
 use litvinjuan\LaravelAfip\Enum\AfipInvoiceType;
 use litvinjuan\LaravelAfip\Enum\AfipService;
+use litvinjuan\LaravelAfip\Exceptions\AfipAuthenticationException;
 use litvinjuan\LaravelAfip\Exceptions\AfipException;
+use litvinjuan\LaravelAfip\Exceptions\AfipSigningException;
 
 class ElectronicBillingWebService
 {
@@ -167,6 +170,9 @@ class ElectronicBillingWebService
             });
     }
 
+    /**
+     * @throws AfipAuthenticationException|AfipSigningException
+     */
     private function getAuthData(): array
     {
         return [
@@ -178,6 +184,8 @@ class ElectronicBillingWebService
 
     public function createInvoices(AfipInvoiceType $invoiceType, int $pointOfSale, array $invoices): array
     {
+        $invoices = Arr::isList($invoices) ? $invoices : [$invoices];
+
         $lastInvoiceNumber = $this->getLastInvoiceNumber($invoiceType, $pointOfSale);
 
         $data = [
@@ -286,33 +294,31 @@ class ElectronicBillingWebService
             $createdInvoices = [$createdInvoices];
         }
 
-        return collect($createdInvoices)
-            ->map(function ($invoice) {
-                $created = Arr::get($invoice, 'Resultado', 'R') !== 'R';
-                $errors = $this->getObservations($invoice);
+        return array_map(function ($invoice) {
+            $created = Arr::get($invoice, 'Resultado', 'R') !== 'R';
+            $errors = $this->getObservations($invoice);
 
-                return collect([
-                    'created' => $created,
-                    'cae' => $created ? Arr::get($invoice, 'CAE') : null,
-                    'cae_expiration_date' => $created ? $this->parseDate(Arr::get($invoice, 'CAEFchVto')) : null,
-                    'invoice_number' => $created ? Arr::get($invoice, 'CbteDesde') : null,
-                    'errors' => $errors,
-                ])
-                    ->reject(function ($value) {
-                        return is_null($value);
-                    })
-                    ->toArray();
-            })
-            ->toArray();
+            return [
+                'created' => $created,
+                'cae' => $created ? Arr::get($invoice, 'CAE') : null,
+                'cae_expiration_date' => $created ? $this->parseDate(Arr::get($invoice, 'CAEFchVto')) : null,
+                'invoice_number' => $created ? Arr::get($invoice, 'CbteDesde') : null,
+                'errors' => $errors,
+            ];
+        }, $createdInvoices);
     }
 
-    private function formatDate(string|DateTimeInterface|null $date): ?string
+    private function formatDate(string|DateTimeInterface|Carbon|null $date): ?string
     {
         if (! $date) {
             return null;
         }
 
-        return Carbon::parse($date)->format('Ymd');
+        if (! $date instanceof Carbon) {
+            $date = Carbon::parse($date);
+        }
+
+        return $date->format('Ymd');
     }
 
     private function parseDate(string|DateTimeInterface|null $date): ?Carbon

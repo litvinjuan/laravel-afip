@@ -2,6 +2,8 @@
 
 namespace litvinjuan\LaravelAfip;
 
+use litvinjuan\LaravelAfip\Signers\AfipCmsSigner;
+
 class AfipConfiguration
 {
     private string $cuit;
@@ -14,7 +16,7 @@ class AfipConfiguration
 
     private bool $production_mode;
 
-    private AfipCmsSigner $signer;
+    private ?AfipCmsSigner $signer = null;
 
     public function __construct(?string $cuit = null, ?string $certificate = null, ?string $private_key = null, ?string $private_key_passphrase = null, bool $production_mode = true)
     {
@@ -23,16 +25,18 @@ class AfipConfiguration
         $this->private_key = $private_key ?? config('afip.key');
         $this->private_key_passphrase = $private_key_passphrase ?? config('afip.key-passphrase');
         $this->production_mode = $production_mode ?? config('afip.production', false);
-
-        $this->signer = new AfipCmsSigner(
-            $this->certificate,
-            $this->private_key,
-            $this->private_key_passphrase
-        );
     }
 
     public function getSigner(): AfipCmsSigner
     {
+        if (is_null($this->signer)) {
+            $this->signer = new AfipCmsSigner(
+                $this->certificate,
+                $this->private_key,
+                $this->private_key_passphrase
+            );
+        }
+
         return $this->signer;
     }
 

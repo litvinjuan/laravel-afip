@@ -1,17 +1,22 @@
 <?php
 
-namespace litvinjuan\LaravelAfip;
+namespace litvinjuan\LaravelAfip\Authorization;
 
 use Illuminate\Support\Facades\Cache;
+use litvinjuan\LaravelAfip\AfipConfiguration;
 use litvinjuan\LaravelAfip\Enum\AfipService;
-use litvinjuan\LaravelAfip\Exceptions\AfipInvalidServiceException;
+use litvinjuan\LaravelAfip\Exceptions\AfipAuthenticationException;
+use litvinjuan\LaravelAfip\Exceptions\AfipSigningException;
 
 class AfipTokenAuthorizationProvider
 {
-    public static function for(AfipConfiguration $configuration, AfipService $service): TokenAuthorization
+    /**
+     * @throws AfipAuthenticationException|AfipSigningException
+     */
+    public static function for(AfipConfiguration $configuration, AfipService $service): ?TokenAuthorization
     {
         if ($service === AfipService::wsaa) {
-            throw new AfipInvalidServiceException("Cannot generate a token authorization for the wsaa service. It's an authentication service and is used to generate other token authorizations.");
+            return null;
         }
 
         $key = self::getCacheKey($configuration, $service);
@@ -24,14 +29,14 @@ class AfipTokenAuthorizationProvider
         return Cache::get($key);
     }
 
-    public static function createServiceTokenAuthorization(AfipConfiguration $configuration, AfipService $service): TokenAuthorization
+    /**
+     * @throws AfipAuthenticationException|AfipSigningException
+     */
+    private static function createServiceTokenAuthorization(AfipConfiguration $configuration, AfipService $service): TokenAuthorization
     {
-        $tokenAuthorizationRequest = new TokenAuthorizationRequest(
-            $configuration,
-            $service
-        );
-
-        return $tokenAuthorizationRequest->createTokenAuthorization();
+        return TokenAuthorizationFactory::for($service)
+            ->with($configuration)
+            ->create();
     }
 
     private static function getCacheKey(AfipConfiguration $configuration, AfipService $service): string

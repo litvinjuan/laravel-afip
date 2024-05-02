@@ -6,8 +6,12 @@ use Exception;
 
 class AfipSoapException extends Exception
 {
-    public function __construct(private readonly Exception $original_exception)
+    private readonly Exception $original_exception;
+
+    public function __construct(Exception $original_exception)
     {
+        $this->original_exception = $original_exception;
+
         parent::__construct($this->original_exception->getMessage(), $this->original_exception->getCode(), $this->original_exception->getPrevious());
     }
 

@@ -4,8 +4,11 @@ namespace litvinjuan\LaravelAfip\WebServices;
 
 use Illuminate\Support\Str;
 use litvinjuan\LaravelAfip\AfipConfiguration;
+use litvinjuan\LaravelAfip\Clients\AfipClient;
 use litvinjuan\LaravelAfip\Enum\AfipPadron;
 use litvinjuan\LaravelAfip\Enum\AfipService;
+use litvinjuan\LaravelAfip\Exceptions\AfipAuthenticationException;
+use litvinjuan\LaravelAfip\Exceptions\AfipSigningException;
 use litvinjuan\LaravelAfip\Exceptions\AfipSoapException;
 use litvinjuan\LaravelAfip\Transformers\PersonaV1Transformer;
 use litvinjuan\LaravelAfip\Transformers\PersonaV2Transformer;
@@ -56,12 +59,9 @@ class PadronWebService
         try {
             $response = $this->getClient($padron)->call(
                 $this->getMethodName($padron),
-                [
-                    'token' => $this->getClient($padron)->getToken(),
-                    'sign' => $this->getClient($padron)->getSign(),
-                    'cuitRepresentada' => $this->configuration->getCuit(),
+                array_merge($this->getAuthData($padron), [
                     'idPersona' => $cuit,
-                ]
+                ])
             );
 
             return $this->getTransformer($padron)->transform($response);
@@ -81,6 +81,18 @@ class PadronWebService
             ->every(function ($value, $key) {
                 return $value === 'OK';
             });
+    }
+
+    /**
+     * @throws AfipAuthenticationException|AfipSigningException
+     */
+    private function getAuthData(AfipPadron $padron): array
+    {
+        return [
+            'token' => $this->getClient($padron)->getToken(),
+            'sign' => $this->getClient($padron)->getSign(),
+            'cuitRepresentada' => $this->configuration->getCuit(),
+        ];
     }
 
     private function getTransformer(AfipPadron $padron): ?Transformer
