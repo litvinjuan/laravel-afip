@@ -59,7 +59,7 @@ class AfipCmsSigner
     {
         $cms = File::get($output_filename);
 
-        $lastHeader = "Content-Transfer-Encoding: base64";
+        $lastHeader = 'Content-Transfer-Encoding: base64';
         $lastHeaderPosition = strpos($cms, $lastHeader);
         $lastHeaderLength = strlen($lastHeader);
 
