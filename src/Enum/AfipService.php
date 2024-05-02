@@ -38,7 +38,7 @@ enum AfipService: string
 
     public function getWsdl(AfipConfiguration $configuration): string
     {
-        $baseWsdlDirectory = __DIR__ . '/../wsdl';
+        $baseWsdlDirectory = __DIR__.'/../wsdl';
 
         $filename = $this->value;
 

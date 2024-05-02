@@ -7,7 +7,9 @@ use Carbon\Carbon;
 class TokenAuthorization
 {
     private readonly string $token;
+
     private readonly string $sign;
+
     private readonly Carbon $expiresAt;
 
     public function __construct(string $token, string $sign, Carbon $expiresAt)

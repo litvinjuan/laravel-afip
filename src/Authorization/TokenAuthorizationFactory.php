@@ -31,6 +31,7 @@ class TokenAuthorizationFactory
     public function with(AfipConfiguration $configuration): self
     {
         $this->configuration = $configuration;
+
         return $this;
     }
 
