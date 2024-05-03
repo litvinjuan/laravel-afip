@@ -29,10 +29,14 @@ class PersonaV1Transformer extends Transformer
         return $array;
     }
 
-    private function normalizeArray(?array $array): array
+    private function normalizeArray(mixed $array): array
     {
         if (! $array) {
             return [];
+        }
+
+        if (! is_array($array)) {
+            return [$array];
         }
 
         if (! array_is_list($array)) {
